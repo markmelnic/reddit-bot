@@ -348,3 +348,9 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/drivers
+/credentials.txt
+/Reddit Bot.sln
+/Reddit Bot.pyproj
+/Reddit-Bot.sln
+/Reddit-Bot.pyproj
