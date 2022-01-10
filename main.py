@@ -25,7 +25,7 @@ if __name__ == "__main__":
         except FileNotFoundError:
             sys.exit("[ERROR!] Credentials file not found.")
     elif args["username"] and args["password"]:
-        accounts = [f"{args['username']}:{args['password']}"]
+        accounts = [f"{args['username']}|{args['password']}"]
     else:
         sys.exit("[ERROR!] No credentials provided.")
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         except FileNotFoundError:
             sys.exit("[ERROR!] Links file not found.")
     elif args["url"] and args["action"]:
-        links = [(args["url"], args["action"])]
+        links = [f'{args["url"]}|{args["action"]}']
     else:
         sys.exit("[ERROR!] No links provided.")
 
