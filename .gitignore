@@ -354,3 +354,8 @@ MigrationBackup/
 /Reddit Bot.pyproj
 /Reddit-Bot.sln
 /Reddit-Bot.pyproj
+
+*.txt
+*.exe
+
+!requirements.txt
