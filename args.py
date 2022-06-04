@@ -41,9 +41,8 @@ def cmdline_args() -> ArgumentParser:
         "-v",
         "--verbose",
         dest="verbose",
-        action="store_false",
-        default=True,
-        help="[none] Don't print INFO messages to stdout",
+        action="store_true",
+        help="[none] Print INFO messages to stdout",
     )
 
     return vars(parser.parse_args())

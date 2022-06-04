@@ -64,7 +64,7 @@ Available flags:
         [path] Read credentials from file to iterate over multiple accounts. The file should be a list of usernames and passwords, one per line, following the structure: username|password. The file should be in the same directory as this script.
 
     -v, --verbose:
-        [none] Don't print INFO messages to stdout.
+        [none] Print INFO messages to stdout.
 
 #### Examples:
 
