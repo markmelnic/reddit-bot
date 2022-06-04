@@ -13,11 +13,6 @@ if __name__ == "__main__":
     else:
         args = cmdline_args()
 
-    if args["verbose"]:
-        logging.basicConfig(
-            level=logging.INFO, format="[INFO] %(asctime)s: %(message)s"
-        )
-
     if args["creds_file"]:
         try:
             with open(args["creds_file"], "r") as f:
@@ -40,7 +35,9 @@ if __name__ == "__main__":
     else:
         sys.exit("[ERROR!] No links provided.")
 
-    bot = RedditBot()
+    bot = RedditBot(
+        verbose=args["verbose"]
+    )
 
     for acc in accounts:
         if acc not in ["\n", "\r\n"]:

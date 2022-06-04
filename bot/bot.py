@@ -1,4 +1,4 @@
-import time, enum, random
+import time, enum, random, logging
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,18 +15,24 @@ class DefaultLinksEnum(enum.Enum):
 
 
 class Timeouts:
-    def srt():
-        return time.sleep(random.random() + random.randint(0, 2))
+    def srt() -> None:
+        time.sleep(random.random() + random.randint(0, 2))
 
-    def med():
-        return time.sleep(random.random() + random.randint(2, 5))
+    def med() -> None:
+        time.sleep(random.random() + random.randint(2, 5))
 
-    def lng():
-        return time.sleep(random.random() + random.randint(5, 10))
+    def lng() -> None:
+        time.sleep(random.random() + random.randint(5, 10))
 
 
 class RedditBot:
-    def __init__(self):
+    def __init__(self, verbose: bool = False):
+        if verbose:
+            logging.basicConfig(
+                level=logging.INFO, format="[INFO] %(asctime)s: %(message)s"
+            )
+
+        logging.info("Booting up webdriver...")
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("log-level=3")
         chrome_options.add_experimental_option(
@@ -35,8 +41,10 @@ class RedditBot:
         self.dv = webdriver.Chrome(
             chrome_options=chrome_options, executable_path=r"chromedriver.exe"
         )
+        logging.info("Webdriver booted up.")
 
     def login(self, username: str, password: str):
+        logging.info(f"Logging in as {username}...")
         self.dv.get(DefaultLinksEnum.login.value)
 
         # username
@@ -79,6 +87,7 @@ class RedditBot:
         Timeouts.med()
         self._popup_handler()
         self._cookies_handler()
+        logging.info("Logged in successfully.")
 
     def vote(self, action: bool, link: str):
         """action: True to upvote, False to downvote"""
