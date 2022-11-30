@@ -2,8 +2,8 @@
 
 # Simple bot to interact with Reddit via Selenium with Chromedriver
 
-![PyPI Version](https://img.shields.io/pypi/pyversions/dash.svg)
-![License](https://img.shields.io/pypi/l/pyapibp.svg)
+![Python Versions](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)
+![License](https://img.shields.io/badge/license-MIT-brightgreen)
 
 </div>
 
@@ -16,12 +16,12 @@ Currently supported interacions:
 - login
 - upvote/downvote post
 - comment under post
+- join/leave community
 
 Work in progress features:
 
 - reply to comment
 - create post
-- join community
 - upvote/downvote last X posts of user/community
 
 ## Usage
@@ -46,7 +46,7 @@ Available flags:
         Show this help message and exit.
 
     --links:
-        [path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action|comment (if action is comment). Actions can be one of the following: upvote, downvote, comment. The file should be in the same directory as this script.
+        [path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action|comment (if action is comment). Actions can be one of the following: upvote, downvote, comment, join, leave. The file should be in the same directory as this script.
 
     --accounts:
         [path] File containing credentials for accounts to perform the actions with. The file should be a list of usernames and passwords, one per line, following the structure: username|password. The file should be in the same directory as this script.
@@ -56,7 +56,7 @@ Available flags:
 
 #### Examples:
 
-This will downvote the first post and downvote the second one and comment under it with 2 accounts.
+This will downvote the first post, downvote the second one and comment under it, join "r/ProgrammerHumor" community then leave it.
 
     > py main.py --accounts accounts.txt --links posts.txt
 
@@ -70,3 +70,5 @@ and posts.txt looks like this:
     https://www.reddit.com/r/ProgrammerHumor/comments/s0f0wd/were_not_the_same_bro/|upvote
     https://www.reddit.com/r/ProgrammerHumor/comments/z8ghv8/gotta_save_those_characters/|downvote
     https://www.reddit.com/r/ProgrammerHumor/comments/z8ghv8/gotta_save_those_characters/|comment|sad
+    https://www.reddit.com/r/ProgrammerHumor/|join
+    https://www.reddit.com/r/ProgrammerHumor/|leave

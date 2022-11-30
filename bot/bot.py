@@ -144,6 +144,30 @@ class RedditBot:
 
         Timeouts.med()
 
+    def join_community(self, link: str, join: bool) -> None:
+        """join: True to join, False to leave"""
+
+        self.dv.get(link)
+        Timeouts.med()
+
+        try:
+            join_button = self.dv.find_element(By.XPATH,
+                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button"
+            )
+        except:
+            join_button = self.dv.find_element(By.XPATH,
+                '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button',
+            )
+
+        button_text = join_button.text.lower()
+
+        if join and button_text == "join":
+            join_button.click()
+        elif not join and button_text == "joined":
+            join_button.click()
+
+        Timeouts.med()
+
     def _popup_handler(self) -> None:
         try:
             close_button = self.dv.find_element(By.XPATH,
