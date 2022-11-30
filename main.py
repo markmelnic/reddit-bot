@@ -48,5 +48,7 @@ if __name__ == "__main__":
                     bot.vote(link, True)
                 elif action == "downvote":
                     bot.vote(link, False)
+                elif action == "comment":
+                    bot.comment(link, contents[2])
 
     bot._dispose()

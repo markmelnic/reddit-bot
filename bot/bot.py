@@ -49,7 +49,7 @@ class RedditBot:
 
         # username
         try:
-            username_field = self.dv.find_element("name", "username")
+            username_field = self.dv.find_element(By.NAME, "username")
         except:
             WebDriverWait(self.dv, 20).until(
                 EC.frame_to_be_available_and_switch_to_it(
@@ -59,7 +59,7 @@ class RedditBot:
                     )
                 )
             )
-            username_field = self.dv.find_element("name", "username")
+            username_field = self.dv.find_element(By.NAME, "username")
 
         for ch in username:
             username_field.send_keys(ch)
@@ -67,7 +67,7 @@ class RedditBot:
         Timeouts.med()
 
         # password
-        password_field = self.dv.find_element("name", "password")
+        password_field = self.dv.find_element(By.NAME, "password")
 
         for ch in password:
             password_field.send_keys(ch)
@@ -76,12 +76,12 @@ class RedditBot:
 
         # sign in
         try:
-            signin_button = self.dv.find_element("xpath",
+            signin_button = self.dv.find_element(By.XPATH,
                 "/html/body/div/div/div[2]/div/form/fieldset[5]/button"
             )
             signin_button.click()
         except:
-            html_body = self.dv.find_element("xpath", "/html/body")
+            html_body = self.dv.find_element(By.XPATH, "/html/body")
             html_body.send_keys(Keys.ENTER)
 
         Timeouts.med()
@@ -96,34 +96,71 @@ class RedditBot:
         Timeouts.med()
 
         if action:
-            button = self.dv.find_element("xpath",
+            button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[1]"
             )
         else:
-            button = self.dv.find_element("xpath",
+            button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[2]"
             )
 
         button.click()
         Timeouts.med()
 
-    def _popup_handler(self):
+    def comment(self, link: str, comment: str) -> None:
+        """comment: the comment to be posted"""
+
+        self.dv.get(link)
+        Timeouts.med()
+
+        html_body = self.dv.find_element(By.XPATH, "/html/body")
+        html_body.send_keys(Keys.PAGE_DOWN)
+        Timeouts.srt()
+
+        if comment:
+            try:
+                textbox = self.dv.find_element(By.XPATH,
+                    "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div"
+                )
+            except:
+                textbox = self.dv.find_element(By.XPATH,
+                    '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div',
+                )
+            textbox.click()
+
+            for ch in comment:
+                textbox.send_keys(ch)
+                Timeouts.srt()
+
+            try:
+                comment_button = self.dv.find_element(By.XPATH,
+                    "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button"
+                )
+            except:
+                comment_button = self.dv.find_element(By.XPATH,
+                    '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button',
+                )
+            comment_button.click()
+
+        Timeouts.med()
+
+    def _popup_handler(self) -> None:
         try:
-            close_button = self.dv.find_element("xpath",
+            close_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[1]/header/div/div[2]/div[2]/div/div[1]/span[2]/div/div[2]/button"
             )
             close_button.click()
         except NoSuchElementException:
             pass
 
-    def _cookies_handler(self):
+    def _cookies_handler(self) -> None:
         try:
-            accept_button = self.dv.find_element("xpath",
+            accept_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div/div/div[3]/div/form/div/button"
             )
             accept_button.click()
         except NoSuchElementException:
             pass
 
-    def _dispose(self):
+    def _dispose(self) -> None:
         self.dv.quit()
