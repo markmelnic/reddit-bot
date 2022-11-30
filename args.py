@@ -5,7 +5,7 @@ def cmdline_args() -> dict:
     parser.add_argument(
         "--links",
         dest="links",
-        help="[path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action. Actions can be either 1 to upvote, 0 to downvote. The file should be in the same directory as this script.",
+        help="[path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action. Actions can be one of the following: upvote, downvote. The file should be in the same directory as this script.",
     )
     parser.add_argument(
         "--accounts",

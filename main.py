@@ -41,8 +41,12 @@ if __name__ == "__main__":
             bot.login(username, password)
 
             for entry in links:
-                if entry not in ["\n", "\r\n"]:
-                    link, action = entry.split("|")
-                    bot.vote(bool(int(action)), link)
+                contents = entry.strip("\n").split("|")
+                link = contents[0]
+                action = contents[1]
+                if action == "upvote":
+                    bot.vote(link, True)
+                elif action == "downvote":
+                    bot.vote(link, False)
 
     bot._dispose()

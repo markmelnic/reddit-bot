@@ -46,7 +46,7 @@ Available flags:
         Show this help message and exit.
 
     --links:
-        [path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action. Actions can be either 1 to upvote, 0 to downvote. The file should be in the same directory as this script.
+        [path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action. Actions can be one of the following: upvote, downvote. The file should be in the same directory as this script.
 
     --accounts:
         [path] File containing credentials for accounts to perform the actions with. The file should be a list of usernames and passwords, one per line, following the structure: username|password. The file should be in the same directory as this script.
@@ -56,7 +56,7 @@ Available flags:
 
 #### Examples:
 
-This will downvote the first post and downvote the latter with 2 accounts.
+This will downvote the first post and downvote the second one with 2 accounts.
 
     > py main.py --accounts accounts.txt --links posts.txt
 
@@ -67,5 +67,5 @@ where accounts.txt looks like this:
 
 and posts.txt looks like this:
 
-    https://www.reddit.com/r/ProgrammerHumor/comments/s0f0wd/were_not_the_same_bro/|1
-    https://www.reddit.com/r/ProgrammerHumor/comments/z8ghv8/gotta_save_those_characters/|0
+    https://www.reddit.com/r/ProgrammerHumor/comments/s0f0wd/were_not_the_same_bro/|upvote
+    https://www.reddit.com/r/ProgrammerHumor/comments/z8ghv8/gotta_save_those_characters/|downvote

@@ -89,7 +89,7 @@ class RedditBot:
         self._cookies_handler()
         logging.info("Logged in successfully.")
 
-    def vote(self, action: bool, link: str):
+    def vote(self, link: str, action: bool) -> None:
         """action: True to upvote, False to downvote"""
 
         self.dv.get(link)
