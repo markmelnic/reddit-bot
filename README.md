@@ -14,15 +14,15 @@ First things first, this bot is rather unstable, meaning it has only been tested
 Currently supported interacions:
 
 - login
-- upvote
-- downvote
+- upvote/downvote post
 
 Work in progress features:
 
-- reply
-- comment
+- comment under post
+- reply to comment
 - create post
 - join community
+- upvote/downvote last X posts of user/community
 
 ## Usage
 
