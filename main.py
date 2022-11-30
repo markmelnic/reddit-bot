@@ -9,29 +9,25 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit(
             '[ERROR!] No options provided. Try using the "-h" flag.'
-        )  # args = prompt_args() # Not available in Python 3.10, yet
+        )
     else:
         args = cmdline_args()
 
-    if args["creds_file"]:
+    if args["accounts"]:
         try:
-            with open(args["creds_file"], "r") as f:
+            with open(args["accounts"], "r") as f:
                 accounts = f.readlines()
         except FileNotFoundError:
             sys.exit("[ERROR!] Credentials file not found.")
-    elif args["username"] and args["password"]:
-        accounts = [f"{args['username']}|{args['password']}"]
     else:
         sys.exit("[ERROR!] No credentials provided.")
 
-    if args["links_file"]:
+    if args["links"]:
         try:
-            with open(args["links_file"], "r") as f:
+            with open(args["links"], "r") as f:
                 links = f.readlines()
         except FileNotFoundError:
             sys.exit("[ERROR!] Links file not found.")
-    elif args["url"] and args["action"]:
-        links = [f'{args["url"]}|{args["action"]}']
     else:
         sys.exit("[ERROR!] No links provided.")
 
