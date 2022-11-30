@@ -14,15 +14,15 @@ First things first, this bot is rather unstable, meaning it has only been tested
 Currently supported interacions:
 
 - login
-- upvote
-- downvote
+- upvote/downvote post
 
 Work in progress features:
 
-- reply
-- comment
+- comment under post
+- reply to comment
 - create post
 - join community
+- upvote/downvote last X posts of user/community
 
 ## Usage
 
@@ -83,4 +83,4 @@ This will downvote the post with the link https://www.reddit.com/r/ProgrammerHum
         and posts.txt looks like this:
             https://www.reddit.com/r/ProgrammerHumor/comments/s0f0wd/were_not_the_same_bro/|0
 
-*A command line GUI is coming as soon as PyInquirer supports Python 3.10 version.*
+*A command line GUI is coming as soon as PyInquirer supports Python 3.11 version.*
