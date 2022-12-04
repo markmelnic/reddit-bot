@@ -4,8 +4,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
-
 from selenium.common.exceptions import NoSuchElementException
 
 
@@ -19,7 +19,7 @@ class Timeouts:
         time.sleep(random.random())
     
     def srt() -> None:
-        time.sleep(random.random() + random(0, 2))
+        time.sleep(random.random() + random.randint(0, 2))
 
     def med() -> None:
         time.sleep(random.random() + random.randint(2, 5))
@@ -48,6 +48,7 @@ class RedditBot:
         logging.info("Webdriver booted up.")
 
     def login(self, username: str, password: str):
+        # sourcery skip: raise-specific-error
         logging.info(f"Logging in as {username}...")
         self.dv.get(DefaultLinksEnum.login.value)
 
@@ -79,9 +80,11 @@ class RedditBot:
         Timeouts.med()
 
         # sign in
-        password_field.send_keys(Keys.ENTER)
-
+        with contextlib.suppress(Exception):
+            password_field.send_keys(Keys.ENTER)
         Timeouts.med()
+        if self.dv.current_url == 'https://www.reddit.com/login/':
+            raise Exception('account does not exist')
         self._popup_handler()
         self._cookies_handler()
         logging.info("Logged in successfully.")
@@ -113,7 +116,25 @@ class RedditBot:
             )
 
         button.click()
-        Timeouts.med()
+        Timeouts.srt()
+    
+    def logout(self)  -> None:
+        self.dv.execute_script("window.open('');")
+        time.sleep(2)
+        self.dv.switch_to.window(self.dv.window_handles[-1])
+        time.sleep(2)
+        self.dv.get('chrome://settings/clearBrowserData') # for old chromedriver versions use cleardriverData
+        time.sleep(2)
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3) # send right combination
+        actions.perform()
+        time.sleep(2)
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 4 + Keys.ENTER) # confirm
+        actions.perform()
+        time.sleep(5) # wait some time to finish
+        self.dv.close() # close this tab
+        self.dv.switch_to.window(self.dv.window_handles[0]) # switch back
 
     def comment(self, link: str, comment: str) -> None:
         """comment: the comment to be posted"""
