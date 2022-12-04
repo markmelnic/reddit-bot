@@ -50,7 +50,7 @@ if __name__ == "__main__":
                     bot.vote(link, False)
                 elif action == "comment":
                     bot.comment(link, contents[2])
-                elif action == "join" or action == "leave":
+                elif action in ["join", "leave"]:
                     bot.join_community(link, action == "join")
 
     bot._dispose()
