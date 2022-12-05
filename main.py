@@ -1,15 +1,23 @@
 import sys, logging
 
-logging.basicConfig(level=logging.ERROR, format="[ERROR] %(asctime)s: %(message)s")
-
+from args import *
 from args import *
 from bot import RedditBot
 
 if __name__ == "__main__":
+    # configure logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.ERROR)
+    logger.addHandler(logging.StreamHandler())
+    logger.addHandler(logging.FileHandler('.log'))
+    formatter = logging.Formatter(
+        "\033[91m[ERROR!]\033[0m %(asctime)s \033[95m%(message)s\033[0m"
+    )
+    logger.handlers[0].setFormatter(formatter)
+
     if len(sys.argv) == 1:
-        sys.exit(
-            '[ERROR!] No options provided. Try using the "-h" flag.'
-        )
+        logger.error("No arguments provided. Use -h or --help for help.")
+        sys.exit(1)
     else:
         args = cmdline_args()
 
@@ -18,18 +26,22 @@ if __name__ == "__main__":
             with open(args["accounts"], "r") as f:
                 accounts = f.readlines()
         except FileNotFoundError:
-            sys.exit("[ERROR!] Credentials file not found.")
+            logger.error(f"Accounts file not found: {args['accounts']}")
+            sys.exit(1)
     else:
-        sys.exit("[ERROR!] No credentials provided.")
+        logger.error("No accounts file provided. Use -h or --help for help.")
+        sys.exit(1)
 
     if args["links"]:
         try:
             with open(args["links"], "r") as f:
                 links = f.readlines()
         except FileNotFoundError:
-            sys.exit("[ERROR!] Links file not found.")
+            logger.error(f"Links file not found: {args['links']}")
+            sys.exit(1)
     else:
-        sys.exit("[ERROR!] No links provided.")
+        logger.error("No links file provided. Use -h or --help for help.")
+        sys.exit(1)
 
     bot = RedditBot(
         verbose=args["verbose"]
@@ -40,11 +52,10 @@ if __name__ == "__main__":
             username, password = acc.split("|")
             try:
                 bot.login(username, password)
-            except Exception:
-                print('Account not valid, noted in exceptions.txt.')
-                with open('exception.txt', 'a') as g:
-                    g.write(acc, "\n")
+            except AssertionError:
+                logger.error(f"Invalid account \033[4m{username}\033[0m")
                 continue
+
             for entry in links:
                 contents = entry.strip("\n").split("|")
                 link = contents[0]
@@ -57,6 +68,5 @@ if __name__ == "__main__":
                     bot.comment(link, contents[2])
                 elif action in ["join", "leave"]:
                     bot.join_community(link, action == "join")
-        bot.logout()
 
     bot._dispose()

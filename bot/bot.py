@@ -15,27 +15,39 @@ class DefaultLinksEnum(enum.Enum):
 
 
 class Timeouts:
-    def tp() -> None:
-        time.sleep(random.random())
-    
     def srt() -> None:
+        """short timeout"""
         time.sleep(random.random() + random.randint(0, 2))
 
     def med() -> None:
+        """medium timeout"""
         time.sleep(random.random() + random.randint(2, 5))
 
     def lng() -> None:
+        """long timeout"""
         time.sleep(random.random() + random.randint(5, 10))
+
+
+class GhostLogger:
+    def info(*args, **kwargs) -> None:
+        pass
 
 
 class RedditBot:
     def __init__(self, verbose: bool = False):
+        self.logger = GhostLogger
         if verbose:
-            logging.basicConfig(
-                level=logging.INFO, format="[INFO] %(asctime)s: %(message)s"
+            self.verbose = True
+            # configure logging
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
+            self.logger.addHandler(logging.StreamHandler())
+            formatter = logging.Formatter(
+                "\033[93m[INFO]\033[0m %(asctime)s \033[95m%(message)s\033[0m"
             )
+            self.logger.handlers[0].setFormatter(formatter)
 
-        logging.info("Booting up webdriver...")
+        self.logger.info("Booting up webdriver")
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("log-level=3")
         chrome_options.add_argument("--lang=en")
@@ -45,11 +57,13 @@ class RedditBot:
         self.dv = webdriver.Chrome(
             chrome_options=chrome_options, executable_path=r"chromedriver.exe"
         )
-        logging.info("Webdriver booted up.")
+        self.logger.info("Webdriver booted up")
 
     def login(self, username: str, password: str):
-        # sourcery skip: raise-specific-error
-        logging.info(f"Logging in as {username}...")
+        # clear data first
+        self.logout()
+
+        self.logger.info(f"Logging in as \033[4m{username}\033[0m")
         self.dv.get(DefaultLinksEnum.login.value)
 
         # username
@@ -68,7 +82,7 @@ class RedditBot:
 
         for ch in username:
             username_field.send_keys(ch)
-            Timeouts.tp()
+            Timeouts.srt()
         Timeouts.med()
 
         # password
@@ -76,68 +90,71 @@ class RedditBot:
 
         for ch in password:
             password_field.send_keys(ch)
-            Timeouts.tp()
+            Timeouts.srt()
         Timeouts.med()
 
         # sign in
         with contextlib.suppress(Exception):
             password_field.send_keys(Keys.ENTER)
         Timeouts.med()
-        if self.dv.current_url == 'https://www.reddit.com/login/':
-            raise Exception('account does not exist')
+
+        assert "https://www.reddit.com/login" not in self.dv.current_url, "Login failed"
+
         self._popup_handler()
         self._cookies_handler()
-        logging.info("Logged in successfully.")
+        self.logger.info("Logged in successfully.")
+
+    def logout(self) -> None:
+        self.logger.info(f"Clearing browser data")
+
+        self.dv.execute_script("window.open('');")
+        self.dv.switch_to.window(self.dv.window_handles[-1])
+        self.dv.get('chrome://settings/clearBrowserData')
+        Timeouts.srt()
+
+        # clear data
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3)
+        actions.perform()
+        Timeouts.srt()
+
+        # confirm
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 4 + Keys.ENTER)
+        actions.perform()
+        Timeouts.med()
+
+        # close current tab
+        self.dv.close()
+
+        # switch to the first tab
+        self.dv.switch_to.window(self.dv.window_handles[0])
 
     def vote(self, link: str, action: bool) -> None:
         """action: True to upvote, False to downvote"""
+        if action:
+            self.logger.info(f"Upvoting \033[4m{link}\033[0m")
+        else:
+            self.logger.info(f"Downvoting \033[4m{link}\033[0m")
 
-        separator = '/?'
-        cLink = link.split(separator, 1)[0]
-        #finds post id
-        fLast = ""
-        for i in cLink[::-1]:
-            if i != '/':
-                fLast += i
-            else:
-                break
-        last = fLast[::-1]
-
-        self.dv.get(cLink)
+        self.dv.get(link)
         Timeouts.med()
 
         if action:
             button = self.dv.find_element(By.XPATH,
-                f'//*[@id="vote-arrows-t1_{last}"]/button[1]'
+                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[1]"
             )
         else:
             button = self.dv.find_element(By.XPATH,
-                f'//*[@id="vote-arrows-t1_{last}"]/button[2]'
+                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[2]"
             )
 
         button.click()
-        Timeouts.srt()
-    
-    def logout(self)  -> None:
-        self.dv.execute_script("window.open('');")
-        time.sleep(2)
-        self.dv.switch_to.window(self.dv.window_handles[-1])
-        time.sleep(2)
-        self.dv.get('chrome://settings/clearBrowserData') # for old chromedriver versions use cleardriverData
-        time.sleep(2)
-        actions = ActionChains(self.dv) 
-        actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3) # send right combination
-        actions.perform()
-        time.sleep(2)
-        actions = ActionChains(self.dv) 
-        actions.send_keys(Keys.TAB * 4 + Keys.ENTER) # confirm
-        actions.perform()
-        time.sleep(5) # wait some time to finish
-        self.dv.close() # close this tab
-        self.dv.switch_to.window(self.dv.window_handles[0]) # switch back
+        Timeouts.med()
 
     def comment(self, link: str, comment: str) -> None:
         """comment: the comment to be posted"""
+        self.logger.info(f"Commenting on \033[4m{link}\033[0m")
 
         self.dv.get(link)
         Timeouts.med()
@@ -175,6 +192,10 @@ class RedditBot:
 
     def join_community(self, link: str, join: bool) -> None:
         """join: True to join, False to leave"""
+        if join:
+            self.logger.info(f"Joining \033[4m{link}\033[0m")
+        else:
+            self.logger.info(f"Leaving \033[4m{link}\033[0m")
 
         self.dv.get(link)
         Timeouts.med()
@@ -209,4 +230,5 @@ class RedditBot:
             accept_button.click()
 
     def _dispose(self) -> None:
+        self.logger.info("Disposing webdriver")
         self.dv.quit()

@@ -45,10 +45,10 @@ Available flags:
     -h, --help:
         Show this help message and exit.
 
-    --links:
+    -l, --links:
         [path] File containing liks and actions. The file should be a list of links, one per line, following the structure: url|action|comment (if action is comment). Actions can be one of the following: upvote, downvote, comment, join, leave. The file should be in the same directory as this script.
 
-    --accounts:
+    -a, --accounts:
         [path] File containing credentials for accounts to perform the actions with. The file should be a list of usernames and passwords, one per line, following the structure: username|password. The file should be in the same directory as this script.
 
     -v, --verbose:
