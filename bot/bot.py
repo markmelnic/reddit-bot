@@ -9,6 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 
+from ghost_logger import GhostLogger
+
+
 class DefaultLinksEnum(enum.Enum):
     home = "https://www.reddit.com/"
     login = "https://www.reddit.com/login/"
@@ -26,11 +29,6 @@ class Timeouts:
     def lng() -> None:
         """long timeout"""
         time.sleep(random.random() + random.randint(5, 10))
-
-
-class GhostLogger:
-    def info(*args, **kwargs) -> None:
-        pass
 
 
 class RedditBot:

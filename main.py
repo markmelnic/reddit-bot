@@ -1,22 +1,25 @@
 import sys, logging
 
 from args import *
-from args import *
 from bot import RedditBot
+from ghost_logger import GhostLogger
 
 if __name__ == "__main__":
-    # configure logging
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.ERROR)
-    logger.addHandler(logging.StreamHandler())
-    logger.addHandler(logging.FileHandler('.log'))
-    formatter = logging.Formatter(
-        "\033[91m[ERROR!]\033[0m %(asctime)s \033[95m%(message)s\033[0m"
-    )
-    logger.handlers[0].setFormatter(formatter)
+    logger = GhostLogger
+    if "-v" in sys.argv or "--verbose" in sys.argv:
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.ERROR)
+        logger.addHandler(logging.StreamHandler())
+        logger.addHandler(logging.FileHandler('.log'))
+        formatter = logging.Formatter(
+            "\033[91m[ERROR!]\033[0m %(asctime)s \033[95m%(message)s\033[0m"
+        )
+        logger.handlers[0].setFormatter(formatter)
 
     if len(sys.argv) == 1:
         logger.error("No arguments provided. Use -h or --help for help.")
+        if "-v" not in sys.argv or "--verbose" not in sys.argv:
+            sys.exit("No arguments provided. Use -h or --help for help.")
         sys.exit(1)
     else:
         args = cmdline_args()
