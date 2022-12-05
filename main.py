@@ -38,8 +38,13 @@ if __name__ == "__main__":
     for acc in accounts:
         if acc not in ["\n", "\r\n"]:
             username, password = acc.split("|")
-            bot.login(username, password)
-
+            try:
+                bot.login(username, password)
+            except Exception:
+                print('Account not valid, noted in exceptions.txt.')
+                with open('exception.txt', 'a') as g:
+                    g.write(acc, "\n")
+                continue
             for entry in links:
                 contents = entry.strip("\n").split("|")
                 link = contents[0]
@@ -50,7 +55,8 @@ if __name__ == "__main__":
                     bot.vote(link, False)
                 elif action == "comment":
                     bot.comment(link, contents[2])
-                elif action == "join" or action == "leave":
+                elif action in ["join", "leave"]:
                     bot.join_community(link, action == "join")
+        bot.logout()
 
     bot._dispose()

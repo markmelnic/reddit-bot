@@ -1,11 +1,11 @@
+import contextlib
 import time, enum, random, logging
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
-
 from selenium.common.exceptions import NoSuchElementException
 
 
@@ -15,6 +15,9 @@ class DefaultLinksEnum(enum.Enum):
 
 
 class Timeouts:
+    def tp() -> None:
+        time.sleep(random.random())
+    
     def srt() -> None:
         time.sleep(random.random() + random.randint(0, 2))
 
@@ -35,6 +38,7 @@ class RedditBot:
         logging.info("Booting up webdriver...")
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("log-level=3")
+        chrome_options.add_argument("--lang=en")
         chrome_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
@@ -44,13 +48,14 @@ class RedditBot:
         logging.info("Webdriver booted up.")
 
     def login(self, username: str, password: str):
+        # sourcery skip: raise-specific-error
         logging.info(f"Logging in as {username}...")
         self.dv.get(DefaultLinksEnum.login.value)
 
         # username
         try:
             username_field = self.dv.find_element(By.NAME, "username")
-        except:
+        except Exception:
             WebDriverWait(self.dv, 20).until(
                 EC.frame_to_be_available_and_switch_to_it(
                     (
@@ -63,7 +68,7 @@ class RedditBot:
 
         for ch in username:
             username_field.send_keys(ch)
-            Timeouts.srt()
+            Timeouts.tp()
         Timeouts.med()
 
         # password
@@ -71,20 +76,15 @@ class RedditBot:
 
         for ch in password:
             password_field.send_keys(ch)
-            Timeouts.srt()
+            Timeouts.tp()
         Timeouts.med()
 
         # sign in
-        try:
-            signin_button = self.dv.find_element(By.XPATH,
-                "/html/body/div/div/div[2]/div/form/fieldset[5]/button"
-            )
-            signin_button.click()
-        except:
-            html_body = self.dv.find_element(By.XPATH, "/html/body")
-            html_body.send_keys(Keys.ENTER)
-
+        with contextlib.suppress(Exception):
+            password_field.send_keys(Keys.ENTER)
         Timeouts.med()
+        if self.dv.current_url == 'https://www.reddit.com/login/':
+            raise Exception('account does not exist')
         self._popup_handler()
         self._cookies_handler()
         logging.info("Logged in successfully.")
@@ -92,20 +92,49 @@ class RedditBot:
     def vote(self, link: str, action: bool) -> None:
         """action: True to upvote, False to downvote"""
 
-        self.dv.get(link)
+        separator = '/?'
+        cLink = link.split(separator, 1)[0]
+        #finds post id
+        fLast = ""
+        for i in cLink[::-1]:
+            if i != '/':
+                fLast += i
+            else:
+                break
+        last = fLast[::-1]
+
+        self.dv.get(cLink)
         Timeouts.med()
 
         if action:
             button = self.dv.find_element(By.XPATH,
-                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[1]"
+                f'//*[@id="vote-arrows-t1_{last}"]/button[1]'
             )
         else:
             button = self.dv.find_element(By.XPATH,
-                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[2]"
+                f'//*[@id="vote-arrows-t1_{last}"]/button[2]'
             )
 
         button.click()
-        Timeouts.med()
+        Timeouts.srt()
+    
+    def logout(self)  -> None:
+        self.dv.execute_script("window.open('');")
+        time.sleep(2)
+        self.dv.switch_to.window(self.dv.window_handles[-1])
+        time.sleep(2)
+        self.dv.get('chrome://settings/clearBrowserData') # for old chromedriver versions use cleardriverData
+        time.sleep(2)
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3) # send right combination
+        actions.perform()
+        time.sleep(2)
+        actions = ActionChains(self.dv) 
+        actions.send_keys(Keys.TAB * 4 + Keys.ENTER) # confirm
+        actions.perform()
+        time.sleep(5) # wait some time to finish
+        self.dv.close() # close this tab
+        self.dv.switch_to.window(self.dv.window_handles[0]) # switch back
 
     def comment(self, link: str, comment: str) -> None:
         """comment: the comment to be posted"""
@@ -122,7 +151,7 @@ class RedditBot:
                 textbox = self.dv.find_element(By.XPATH,
                     "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div"
                 )
-            except:
+            except Exception:
                 textbox = self.dv.find_element(By.XPATH,
                     '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div',
                 )
@@ -136,7 +165,7 @@ class RedditBot:
                 comment_button = self.dv.find_element(By.XPATH,
                     "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button"
                 )
-            except:
+            except Exception:
                 comment_button = self.dv.find_element(By.XPATH,
                     '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button',
                 )
@@ -154,37 +183,30 @@ class RedditBot:
             join_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button"
             )
-        except:
+        except Exception:
             join_button = self.dv.find_element(By.XPATH,
                 '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button',
             )
 
         button_text = join_button.text.lower()
 
-        if join and button_text == "join":
+        if join and button_text == "join" or not join and button_text == "joined":
             join_button.click()
-        elif not join and button_text == "joined":
-            join_button.click()
-
         Timeouts.med()
 
     def _popup_handler(self) -> None:
-        try:
+        with contextlib.suppress(NoSuchElementException):
             close_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[1]/header/div/div[2]/div[2]/div/div[1]/span[2]/div/div[2]/button"
             )
             close_button.click()
-        except NoSuchElementException:
-            pass
 
     def _cookies_handler(self) -> None:
-        try:
+        with contextlib.suppress(NoSuchElementException):
             accept_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div/div/div[3]/div/form/div/button"
             )
             accept_button.click()
-        except NoSuchElementException:
-            pass
 
     def _dispose(self) -> None:
         self.dv.quit()
