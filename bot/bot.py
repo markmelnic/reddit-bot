@@ -67,7 +67,7 @@ class RedditBot:
         # username
         try:
             username_field = self.dv.find_element(By.NAME, "username")
-        except Exception:
+        except NoSuchElementException:
             WebDriverWait(self.dv, 20).until(
                 EC.frame_to_be_available_and_switch_to_it(
                     (
@@ -135,16 +135,15 @@ class RedditBot:
         else:
             self.logger.info(f"Downvoting \033[4m{link}\033[0m")
 
-        self.dv.get(link)
-        Timeouts.med()
+        self._get_link(link, handle_nsfw=True)
 
         if action:
             button = self.dv.find_element(By.XPATH,
-                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[1]"
+                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[3]/div[1]/div/div[1]/div/button[1]"
             )
         else:
             button = self.dv.find_element(By.XPATH,
-                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[2]/div[1]/div/div[1]/div/button[2]"
+                "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[3]/div[1]/div[3]/div[1]/div/div[1]/div/button[2]"
             )
 
         button.click()
@@ -154,8 +153,7 @@ class RedditBot:
         """comment: the comment to be posted"""
         self.logger.info(f"Commenting on \033[4m{link}\033[0m")
 
-        self.dv.get(link)
-        Timeouts.med()
+        self._get_link(link, handle_nsfw=True)
 
         html_body = self.dv.find_element(By.XPATH, "/html/body")
         html_body.send_keys(Keys.PAGE_DOWN)
@@ -166,7 +164,7 @@ class RedditBot:
                 textbox = self.dv.find_element(By.XPATH,
                     "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div"
                 )
-            except Exception:
+            except NoSuchElementException:
                 textbox = self.dv.find_element(By.XPATH,
                     '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[2]/div/div[1]/div/div/div',
                 )
@@ -180,7 +178,7 @@ class RedditBot:
                 comment_button = self.dv.find_element(By.XPATH,
                     "/html/body/div[1]/div/div[2]/div[3]/div/div/div/div[2]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button"
                 )
-            except Exception:
+            except NoSuchElementException:
                 comment_button = self.dv.find_element(By.XPATH,
                     '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[3]/div[1]/div[2]/div[3]/div[2]/div/div/div[3]/div[1]/button',
                 )
@@ -195,14 +193,13 @@ class RedditBot:
         else:
             self.logger.info(f"Leaving \033[4m{link}\033[0m")
 
-        self.dv.get(link)
-        Timeouts.med()
+        self._get_link(link, handle_nsfw=True)
 
         try:
             join_button = self.dv.find_element(By.XPATH,
                 "/html/body/div[1]/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button"
             )
-        except Exception:
+        except NoSuchElementException:
             join_button = self.dv.find_element(By.XPATH,
                 '//*[@id="AppRouter-main-content"]/div/div/div[2]/div[1]/div/div[1]/div/div[2]/div/button',
             )
@@ -212,6 +209,18 @@ class RedditBot:
         if join and button_text == "join" or not join and button_text == "joined":
             join_button.click()
         Timeouts.med()
+
+    def _get_link(self, link: str, handle_nsfw: bool = False) -> None:
+        self.dv.get(link)
+        Timeouts.med()
+
+        if handle_nsfw:
+            with contextlib.suppress(NoSuchElementException):
+                nsfw_button = self.dv.find_element(By.XPATH,
+                    "/html/body/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div/div[2]/button"
+                )
+                nsfw_button.click()
+            Timeouts.med()
 
     def _popup_handler(self) -> None:
         with contextlib.suppress(NoSuchElementException):
