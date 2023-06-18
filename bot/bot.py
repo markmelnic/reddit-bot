@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 
-from ghost_logger import GhostLogger
+from .ghost_logger import GhostLogger
 
 
 class DefaultLinksEnum(enum.Enum):

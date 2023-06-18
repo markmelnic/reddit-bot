@@ -9,7 +9,7 @@
 
 ## Usage
 
-First things first, this bot is rather unstable, meaning it has only been tested on Windows, with my internet conection *etc... etc...*. If you encounter any issues, or have any suggestions, feel free to let me know or contribute yourself.
+First things first, this bot is rather unstable, meaning it has only been tested on Windows, with my internet conection _etc... etc..._. If you encounter any issues, or have any suggestions, feel free to let me know or contribute yourself.
 
 Currently supported interacions:
 

@@ -1,8 +1,7 @@
 import sys, logging
 
 from args import *
-from bot import RedditBot
-from ghost_logger import GhostLogger
+from bot import RedditBot, GhostLogger
 
 if __name__ == "__main__":
     logger = GhostLogger
