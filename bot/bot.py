@@ -17,7 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 from .config import BotConfig
@@ -87,44 +87,49 @@ class RedditBot:
         self._init_driver()
 
     def _init_driver(self) -> None:
-        """Initialize Chrome webdriver with all configured options."""
-        self.logger.info("Booting up webdriver")
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--log-level=3")
-        chrome_options.add_argument("--lang=en")
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option("useAutomationExtension", False)
-        chrome_options.add_experimental_option(
-            "prefs", {"profile.default_content_setting_values.notifications": 2}
-        )
+        """Initialize Chrome webdriver with undetected-chromedriver to bypass Cloudflare/bot detection."""
+        self.logger.info("Booting up undetected webdriver")
+        print(f">>> [REDDIT BOT] Booting up undetected-chromedriver to bypass Cloudflare...", flush=True)
+        
+        import undetected_chromedriver as uc
 
+        options = uc.ChromeOptions()
+        options.add_argument("--lang=en")
+        
         # Headless mode
         if self.config.headless:
-            chrome_options.add_argument("--headless=new")
-            chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--headless=new")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
 
         # User-Agent rotation
         if self.config.rotate_user_agent:
             ua = get_random_user_agent()
-            chrome_options.add_argument(f"--user-agent={ua}")
+            options.add_argument(f"--user-agent={ua}")
             self.logger.info(f"Using user agent: {ua[:60]}...")
 
         # Proxy
         proxy = get_next_proxy() if self.config.proxy.enabled else None
         if proxy:
-            chrome_options.add_argument(proxy.chrome_arg)
+            options.add_argument(proxy.chrome_arg)
             self.logger.info(f"Using proxy: {proxy.address}")
 
-        service = Service(ChromeDriverManager().install())
-        self.dv = webdriver.Chrome(service=service, options=chrome_options)
-
-        # Remove webdriver navigator flag
-        self.dv.execute_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
+        try:
+            self.dv = uc.Chrome(options=options, use_subprocess=True, version_main=None)
+            print(f">>> [REDDIT BOT] Undetected Chromedriver booted successfully", flush=True)
+        except Exception as e:
+            print(f">>> [REDDIT BOT] Failed to boot uc.Chrome: {e}, falling back to standard selenium", flush=True)
+            chrome_options = webdriver.ChromeOptions()
+            chrome_options.add_argument("--log-level=3")
+            chrome_options.add_argument("--lang=en")
+            if self.config.headless:
+                chrome_options.add_argument("--headless=new")
+                chrome_options.add_argument("--window-size=1920,1080")
+                chrome_options.add_argument("--no-sandbox")
+                chrome_options.add_argument("--disable-dev-shm-usage")
+            service = Service(ChromeDriverManager().install())
+            self.dv = webdriver.Chrome(service=service, options=chrome_options)
 
         self.logger.info("Webdriver booted up")
 
@@ -143,47 +148,153 @@ class RedditBot:
         self._current_account = username
 
         self.logger.info(f"Logging in as {username}")
+        print(f">>> [REDDIT BOT] Navigating to login page...", flush=True)
         self.dv.get(DefaultLinksEnum.LOGIN.value)
         Timeouts.med()
 
-        # Username field
-        try:
-            username_field = self.dv.find_element(By.NAME, "username")
-        except NoSuchElementException:
-            WebDriverWait(self.dv, 20).until(
-                EC.frame_to_be_available_and_switch_to_it(
-                    (By.CSS_SELECTOR, "iframe[src*='login']")
-                )
-            )
-            username_field = self.dv.find_element(By.NAME, "username")
+        def find_element_with_all_fallbacks(selectors, max_wait=20):
+            start = time.time()
+            while time.time() - start < max_wait:
+                # 1. Try in default main frame
+                for by, selector in selectors:
+                    try:
+                        el = self.dv.find_element(by, selector)
+                        if el.is_displayed():
+                            return el, None
+                    except Exception:
+                        continue
+                
+                # 2. Try inside iframes
+                try:
+                    iframes = self.dv.find_elements(By.TAG_NAME, "iframe")
+                    for iframe in iframes:
+                        try:
+                            self.dv.switch_to.frame(iframe)
+                            for by, selector in selectors:
+                                try:
+                                    el = self.dv.find_element(by, selector)
+                                    if el.is_displayed():
+                                        return el, iframe
+                                except Exception:
+                                    continue
+                        except Exception:
+                            pass
+                        finally:
+                            self.dv.switch_to.default_content()
+                except Exception:
+                    pass
+                
+                time.sleep(1)
+            return None, None
 
+        # Username field
+        username_selectors = [
+            (By.NAME, "username"),
+            (By.ID, "loginUsername"),
+            (By.ID, "login-username"),
+            (By.CSS_SELECTOR, "input[autocomplete='username']"),
+            (By.CSS_SELECTOR, "input[name='username']"),
+            (By.XPATH, "//input[@type='text']"),
+            (By.XPATH, "//input[@type='email']"),
+        ]
+
+        print(f">>> [REDDIT BOT] Searching for username field with advanced fallback search...", flush=True)
+        username_field, u_iframe = find_element_with_all_fallbacks(username_selectors, max_wait=20)
+        
+        if not username_field:
+            print(f">>> [REDDIT BOT] Error: Username field not found anywhere on the page!", flush=True)
+            print(f">>> [REDDIT BOT] Current URL: {self.dv.current_url}", flush=True)
+            print(f">>> [REDDIT BOT] Page Title: {self.dv.title}", flush=True)
+            try:
+                inputs = self.dv.execute_script("""
+                    var elms = document.getElementsByTagName('input');
+                    var res = [];
+                    for(var i=0; i<elms.length; i++) {
+                        res.push({
+                            id: elms[i].id,
+                            name: elms[i].name,
+                            type: elms[i].type,
+                            placeholder: elms[i].placeholder,
+                            className: elms[i].className
+                        });
+                    }
+                    return JSON.stringify(res);
+                """)
+                print(f">>> [REDDIT BOT] Main page inputs: {inputs}", flush=True)
+            except Exception as js_err:
+                print(f">>> [REDDIT BOT] Could not extract inputs: {js_err}", flush=True)
+            raise RuntimeError("Username field not found on page.")
+
+        # Switch to correct frame
+        if u_iframe:
+            print(f">>> [REDDIT BOT] Username field is in an iframe, switching to it...", flush=True)
+            self.dv.switch_to.frame(u_iframe)
+        else:
+            print(f">>> [REDDIT BOT] Username field is on the main page.", flush=True)
+            self.dv.switch_to.default_content()
+
+        print(f">>> [REDDIT BOT] Typing username...", flush=True)
         for ch in username:
             username_field.send_keys(ch)
             Timeouts.srt()
         Timeouts.med()
 
-        # Password field
-        password_field = self.dv.find_element(By.NAME, "password")
+        # Switch back to default content to search for password field (just in case)
+        self.dv.switch_to.default_content()
+
+        # Search for password field
+        password_selectors = [
+            (By.NAME, "password"),
+            (By.ID, "loginPassword"),
+            (By.ID, "login-password"),
+            (By.CSS_SELECTOR, "input[type='password']"),
+            (By.CSS_SELECTOR, "input[name='password']"),
+            (By.XPATH, "//input[@type='password']"),
+        ]
+
+        print(f">>> [REDDIT BOT] Searching for password field with advanced fallback search...", flush=True)
+        password_field, p_iframe = find_element_with_all_fallbacks(password_selectors, max_wait=15)
+
+        if not password_field:
+            print(f">>> [REDDIT BOT] Error: Password field not found anywhere on the page!", flush=True)
+            raise RuntimeError("Password field not found on page.")
+
+        if p_iframe:
+            print(f">>> [REDDIT BOT] Password field is in an iframe, switching to it...", flush=True)
+            self.dv.switch_to.frame(p_iframe)
+        else:
+            print(f">>> [REDDIT BOT] Password field is on the main page.", flush=True)
+            self.dv.switch_to.default_content()
+
+        print(f">>> [REDDIT BOT] Typing password...", flush=True)
         for ch in password:
             password_field.send_keys(ch)
             Timeouts.srt()
         Timeouts.med()
 
         # Submit
+        print(f">>> [REDDIT BOT] Submitting login form...", flush=True)
         with contextlib.suppress(Exception):
             password_field.send_keys(Keys.ENTER)
         Timeouts.med()
 
+        # Always switch back to default content after typing/submitting
+        self.dv.switch_to.default_content()
+
         if "login" in self.dv.current_url:
+            print(f">>> [REDDIT BOT] Login failed, still on login page. Current URL: {self.dv.current_url}", flush=True)
             raise RuntimeError(f"Login failed for user: {username}")
 
+        print(f">>> [REDDIT BOT] Login successful! Handling popups...", flush=True)
         self._popup_handler()
         self._cookies_handler()
 
         # Save session if persistence is enabled
         if self.config.session_persistence:
+            print(f">>> [REDDIT BOT] Saving session...", flush=True)
             self._save_session(username)
 
+        print(f">>> [REDDIT BOT] Login sequence completed.", flush=True)
         self.logger.info("Logged in successfully.")
 
     def login_with_session(self, username: str) -> bool:
@@ -196,7 +307,14 @@ class RedditBot:
             return False
 
         self.logger.info(f"Restoring session for {username}")
-        self.dv.get(DefaultLinksEnum.HOME.value)
+        # Load robots.txt first to set cookies without triggering dynamic bot checks on home page
+        try:
+            self.dv.get("https://www.reddit.com/robots.txt")
+        except Exception:
+            try:
+                self.dv.get(DefaultLinksEnum.HOME.value)
+            except Exception:
+                pass
         Timeouts.srt()
 
         import json
@@ -204,14 +322,21 @@ class RedditBot:
             cookies = json.load(f)
 
         for cookie in cookies:
+            if "domain" not in cookie or not cookie["domain"]:
+                cookie["domain"] = ".reddit.com"
             with contextlib.suppress(Exception):
                 self.dv.add_cookie(cookie)
 
-        self.dv.refresh()
+        # Now navigate to the actual Home page with the cookies already sent in the request header!
+        try:
+            self.dv.get(DefaultLinksEnum.HOME.value)
+        except Exception:
+            pass
         Timeouts.med()
 
         # Verify login
-        if "login" not in self.dv.current_url:
+        current_url = self.dv.current_url
+        if "login" not in current_url:
             self._current_account = username
             self.logger.info("Session restored successfully.")
             return True
@@ -222,9 +347,12 @@ class RedditBot:
     def logout(self) -> None:
         """Clear browser data between accounts."""
         self.logger.info("Clearing browser data")
-        self.dv.delete_all_cookies()
-        self.dv.execute_script("window.localStorage.clear();")
-        self.dv.execute_script("window.sessionStorage.clear();")
+        with contextlib.suppress(Exception):
+            self.dv.delete_all_cookies()
+        with contextlib.suppress(Exception):
+            self.dv.execute_script("window.localStorage.clear();")
+        with contextlib.suppress(Exception):
+            self.dv.execute_script("window.sessionStorage.clear();")
 
     # ─── Action Execution ────────────────────────────────────────
 

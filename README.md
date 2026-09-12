@@ -121,7 +121,26 @@ docker build -t reddit-bot .
 
 ---
 
-## Quick Start
+## 🔑 Bypassing Cloudflare & Captchas (Manual Session Export)
+
+If Cloudflare or Reddit CAPTCHA blocks automated login on Render/Railway, you can log in manually on your local computer once and export your session cookies:
+
+1. Run the helper script on your local machine:
+   ```bash
+   python export_session.py
+   ```
+2. Enter your Reddit username (e.g., `AppropriateChance699`).
+3. A visible browser window will open. Log into Reddit manually and solve any captchas within 90 seconds.
+4. The script will automatically save your session cookies to `sessions/AppropriateChance699.cookies`.
+5. Commit and push the `sessions/` directory to GitHub:
+   ```bash
+   git add sessions/
+   git commit -m "Add pre-authenticated session cookies"
+   git push origin main
+   ```
+6. Render will deploy with your cookies pre-installed, and the bot will authenticate instantly without needing password login or triggering Cloudflare!
+
+---
 
 ### Minimal Example
 

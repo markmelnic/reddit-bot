@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Bot Control Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="h-full text-slate-100 flex flex-col font-sans">
+    <!-- Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-orange-600 text-white p-2 rounded-xl flex items-center justify-center shadow-md">
+                <i class="fa-brands fa-reddit-alien text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Reddit Bot Control Panel</h1>
+                <p class="text-xs text-slate-400">Cloud Automation & Session Manager</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
+                <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Service Active
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8 overflow-y-auto">
+        
+        <!-- Left Column: Controls & Account/Cookie Upload -->
+        <div class="space-y-8 lg:col-span-1">
+            
+            <!-- Account & Credentials Card -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <i class="fa-solid fa-user-gear text-orange-500 mr-2.5"></i> Account & Credentials
+                </h2>
+                
+                <form action="/save_account" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Reddit Username</label>
+                        <input type="text" name="username" value="{{ username }}" required
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Reddit Password</label>
+                        <input type="password" name="password" value="{{ password }}" required
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                    </div>
+                    <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-medium py-2.5 px-4 rounded-xl shadow-lg transition duration-200 text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i> <span>Save Account Credentials</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Session Cookies Uploader (Bypass Cloudflare) -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-2 flex items-center">
+                    <i class="fa-solid fa-cookie-bite text-amber-500 mr-2.5"></i> Reddit Session Cookie
+                </h2>
+                <p class="text-xs text-slate-400 mb-4">
+                    Copy the value of your <code>reddit_session</code> cookie from your browser (using Cookie-Editor extension) and paste it below. The bot will use it to log in instantly!
+                </p>
+                
+                <form action="/save_cookies" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">reddit_session Value (or full JSON)</label>
+                        <textarea name="cookies_json" rows="4" placeholder='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' required
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-300 focus:outline-none focus:border-amber-500 transition"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium py-2.5 px-4 rounded-xl shadow-lg transition duration-200 text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i> <span>Save Session Cookie</span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Live Logs & Actions -->
+        <div class="lg:col-span-2 flex flex-col space-y-8">
+            
+            <!-- Quick Trigger Actions -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <i class="fa-solid fa-bolt text-yellow-500 mr-2.5"></i> Bot Execution Control
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Trigger a manual run immediately or check status.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <form action="/run_bot" method="POST">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-6 rounded-xl shadow-lg transition duration-200 text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-play"></i> <span>Run Bot Now</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Real-time Live Logs Terminal -->
+            <div class="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl flex-1 flex flex-col min-h-[400px]">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <i class="fa-solid fa-terminal text-blue-500 mr-2.5"></i> Live Execution Logs
+                    </h2>
+                    <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rotate"></i> <span>Refresh Logs</span>
+                    </button>
+                </div>
+                
+                <div class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-emerald-400 overflow-y-auto max-h-[500px] whitespace-pre-wrap shadow-inner" id="log-container">{{ logs }}</div>
+                <p class="text-[11px] text-slate-500 mt-2 text-right">Auto-refreshes every 5 seconds.</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Auto refresh logs every 5 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                if (data.logs) {
+                    const container = document.getElementById('log-container');
+                    container.textContent = data.logs;
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (e) {
+                console.error("Failed to fetch logs", e);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

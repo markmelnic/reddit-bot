@@ -359,6 +359,8 @@ MigrationBackup/
 *.exe
 
 !requirements.txt
+!accounts.txt
+!links.txt
 
 # Reddit Bot specific
 reddit_bot.db
@@ -366,7 +368,9 @@ screenshots/
 .sessions/
 .log
 config.yaml
-accounts.*
 !config.example.yaml
 *.cookies
+*.bin
+!accounts.txt
+!links.txt
 *.bin

@@ -18,11 +18,19 @@ class CommentAction(BaseAction):
 
     def execute(self, link: str = "", text: str = "", **kwargs: Any) -> ActionResult:
         if not text:
+            print(f">>> [REDDIT BOT] Error: No comment text provided for link: {link}", flush=True)
             return ActionResult(success=False, action="comment", link=link, message="No comment text provided")
 
-        self.logger.info(f"Commenting on {link}")
+        print(f"\n==================================================", flush=True)
+        print(f">>> [REDDIT BOT] STARTING COMMENT ACTION", flush=True)
+        print(f">>> Link: {link}", flush=True)
+        print(f">>> Comment Text: '{text}'", flush=True)
+        print(f"==================================================\n", flush=True)
+
+        self.logger.info(f"Commenting on {link} with text: '{text}'")
 
         if self.config.dry_run:
+            print(f">>> [REDDIT BOT] DRY RUN: Would post comment '{text}'", flush=True)
             return ActionResult(success=True, action="comment", link=link, message=f"Dry run: would comment '{text[:50]}...'")
 
         self._navigate(link)
@@ -48,6 +56,12 @@ class CommentAction(BaseAction):
         )
         self._click(submit_btn)
         Timeouts.med()
+
+        print(f"\n==================================================", flush=True)
+        print(f">>> [REDDIT BOT] SUCCESS: Comment posted successfully!", flush=True)
+        print(f">>> Link: {link}", flush=True)
+        print(f">>> Comment: '{text}'", flush=True)
+        print(f"==================================================\n", flush=True)
 
         return ActionResult(success=True, action="comment", link=link, message="Comment posted")
 

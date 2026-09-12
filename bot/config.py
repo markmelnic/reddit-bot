@@ -56,7 +56,7 @@ class BotConfig:
     parallel_accounts: int = 1
     schedule_cron: Optional[str] = None
     session_persistence: bool = False
-    session_dir: str = ".sessions"
+    session_dir: str = "sessions"
 
     # Reporting
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
